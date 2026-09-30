@@ -10,11 +10,16 @@ import {
   Trophy,
   CheckCircle2,
   Users,
-  AlertCircle
+  AlertCircle,
+  Leaf,
+  Calculator,
+  Shield,
+  Palette,
+  ChevronRight
 } from 'lucide-react';
 import { api } from '../lib/api.ts';
 import { sound } from '../lib/sound.ts';
-import { SchoolProfile, GameSession } from '../types/index.ts';
+import { SchoolProfile, GameSession, Subject, QuestionSet } from '../types/index.ts';
 
 interface DashboardViewProps {
   school: SchoolProfile | null;
@@ -31,6 +36,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [questionSets, setQuestionSets] = useState<QuestionSet[]>([]);
   const [summaryData, setSummaryData] = useState<{
     counts: {
       totalQuestionSets: number;
@@ -61,8 +68,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     try {
       setLoading(true);
       setError(null);
-      const data = await api.getReportsSummary();
+      const [data, subs, sets] = await Promise.all([
+        api.getReportsSummary(),
+        api.getSubjects(),
+        api.getQuestionSets(),
+      ]);
       setSummaryData(data);
+      setSubjects(subs);
+      setQuestionSets(sets);
     } catch (err: unknown) {
       console.error('Error fetching dashboard summary:', err);
       setError(err instanceof Error ? err.message : 'Gagal memuat data dashboard.');
@@ -293,6 +306,99 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </span>
           </button>
 
+        </div>
+      </div>
+
+      {/* MATA PELAJARAN UNGGULAN SECTION (IPAS, Matematika, Pendidikan Pancasila, SBdP, Bahasa Indonesia) */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-emerald-600" />
+              Mata Pelajaran Kurikulum Merdeka Fase C (Kelas VI)
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Pilih mata pelajaran untuk langsung memulai game kelas atau membuat soal dengan AI
+            </p>
+          </div>
+          <button
+            onClick={() => onNavigate('bank_soal')}
+            className="text-xs text-emerald-700 hover:text-emerald-800 font-semibold"
+          >
+            Semua Paket Soal →
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {subjects.map((sub) => {
+            // Find corresponding question set if any
+            const matchingSet = questionSets.find((s) => s.subjectId === sub.id) || questionSets[0];
+
+            let iconComp = <BookOpen className="w-5 h-5" />;
+            if (sub.id === 'sub-ipas') iconComp = <Leaf className="w-5 h-5 text-emerald-600" />;
+            if (sub.id === 'sub-matematika') iconComp = <Calculator className="w-5 h-5 text-sky-600" />;
+            if (sub.id === 'sub-pendidikan-pancasila') iconComp = <Shield className="w-5 h-5 text-rose-600" />;
+            if (sub.id === 'sub-sbdp') iconComp = <Palette className="w-5 h-5 text-purple-600" />;
+
+            return (
+              <div
+                key={sub.id}
+                className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:border-slate-300 transition-all flex flex-col justify-between space-y-4"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <div
+                      className="p-2.5 rounded-xl flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: `${sub.color}15` }}
+                    >
+                      {iconComp}
+                    </div>
+                    <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                      {sub.code}
+                    </span>
+                  </div>
+
+                  <h3 className="font-bold text-sm sm:text-base text-slate-900 leading-tight">
+                    {sub.name}
+                  </h3>
+
+                  <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                    {sub.description}
+                  </p>
+
+                  <div className="mt-3 pt-2 border-t border-slate-100 flex items-center gap-1.5 text-[11px] text-slate-500">
+                    <span className="font-semibold text-slate-700">{sub.topics?.length || 0} Bab Silabus</span>
+                    <span aria-hidden="true">·</span>
+                    <span>{sub.fase}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-2">
+                  <button
+                    onClick={() => {
+                      sound.playTick();
+                      onStartGameWithSet(matchingSet?.id);
+                    }}
+                    className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                    Mainkan Game Kelas
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      sound.playTick();
+                      onNavigate('generator');
+                    }}
+                    className="w-full py-1.5 px-3 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                    Buat Soal AI
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
