@@ -1,0 +1,6 @@
+{
+  "name": "SISWA KREATIF DENGAN GAME KREATIF - MIN 1 PASER",
+  "description": "Aplikasi pembelajaran berbasis permainan interaktif, generator soal AI, bank soal, dan dokumentasi asesmen formatif untuk MIN 1 Paser.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
